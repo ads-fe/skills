@@ -1,0 +1,43 @@
+{
+  "name": "ads-fe",
+  "version": "0.0.1",
+  "description": "Dynamic skill discovery CLI",
+  "type": "module",
+  "bin": {
+    "ads-fe": "dist/cli.js"
+  },
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "pnpm clean && tsc -p tsconfig.json",
+    "prepack": "pnpm build",
+    "dev": "tsx src/cli.ts",
+    "skill:init": "tsx src/cli.ts skill init",
+    "skill:sync": "tsx src/cli.ts skill sync",
+    "skill:update": "tsx src/cli.ts skill update",
+    "skill:check": "tsx src/cli.ts skill check",
+    "skill:cleanup": "tsx src/cli.ts skill cleanup",
+    "test": "pnpm build && node --test tests/*.test.mjs"
+  },
+  "keywords": [
+    "skills",
+    "cli",
+    "adspower"
+  ],
+  "files": [
+    "dist/cli.js",
+    "dist/meta.js",
+    "skill.md",
+    "skills",
+    "README.md"
+  ],
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.10.1"
+  }
+}

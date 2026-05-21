@@ -1,0 +1,33 @@
+[submodule "sources/vue"]
+	path = sources/vue
+	url = https://github.com/vuejs/docs
+[submodule "sources/nuxt"]
+	path = sources/nuxt
+	url = https://github.com/nuxt/nuxt
+[submodule "vendor/vue"]
+	path = vendor/vue
+	url = https://github.com/antfu/skills
+[submodule "vendor/slidev"]
+	path = vendor/slidev
+	url = https://github.com/slidevjs/slidev
+[submodule "vendor/vueuse"]
+	path = vendor/vueuse
+	url = https://github.com/vueuse/vueuse
+[submodule "vendor/tsdown"]
+	path = vendor/tsdown
+	url = https://github.com/rolldown/tsdown
+[submodule "vendor/vuejs-ai"]
+	path = vendor/vuejs-ai
+	url = https://github.com/vuejs-ai/skills
+[submodule "vendor/turborepo"]
+	path = vendor/turborepo
+	url = https://github.com/vercel/turborepo
+[submodule "vendor/web-design-guidelines"]
+	path = vendor/web-design-guidelines
+	url = https://github.com/vercel-labs/agent-skills
+[submodule "vendor/partme-ai"]
+	path = vendor/partme-ai
+	url = https://github.com/partme-ai/full-stack-skills
+[submodule "vendor/mcollina"]
+	path = vendor/mcollina
+	url = https://github.com/mcollina/skills
