@@ -38,6 +38,15 @@ ads-fe init cursor --project
 
 `ads-fe init <agent>` installs this package's bundled skill into an AI agent.
 
+Install paths:
+
+- Codex global: `~/.codex/skills/ads-fe/SKILL.md`
+- Claude global: `~/.claude/skills/ads-fe/SKILL.md`
+- Cursor global: `~/.cursor/skills/ads-fe/SKILL.md`
+- Cursor project-local: `.cursor/skills/ads-fe/SKILL.md`
+
+Cursor uses the Agent Skills directory layout and is no longer installed into `.cursor/rules`.
+
 `ads-fe skill init` is different: it initializes external skill source repositories used to maintain this package.
 
 ## Commands

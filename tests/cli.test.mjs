@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -13,6 +13,23 @@ function runCli(args, cwd, env = {}) {
     encoding: 'utf8',
     env: { ...process.env, ...env },
   });
+}
+
+async function findFilesByName(dir, filename) {
+  const out = [];
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...(await findFilesByName(fullPath, filename)));
+      continue;
+    }
+
+    if (entry.isFile() && entry.name === filename) out.push(fullPath);
+  }
+
+  return out.sort();
 }
 
 test('skill sync copies configured vendor skills into skill-data', async () => {
@@ -41,6 +58,14 @@ test('skill help uses ads-fe as the public command name', () => {
   assert.doesNotMatch(result.stdout, /Usage: adspower skill/);
 });
 
+test('skill get reads bundled skill-data when run outside the package root', async () => {
+  const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  const result = runCli(['skill', 'get', 'core'], project);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /name: core/);
+});
+
 test('init claude installs bundled skill globally', async () => {
   const home = await mkdtemp(path.join(tmpdir(), 'adspower-home-'));
   const result = runCli(['init', 'claude'], process.cwd(), {
@@ -51,9 +76,10 @@ test('init claude installs bundled skill globally', async () => {
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const skill = await readFile(path.join(home, '.claude', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
-  const data = await readFile(path.join(home, '.claude', 'skills', 'ads-fe', 'skill-data', 'core', 'SKILL.md'), 'utf8');
   assert.match(skill, /ads-fe/i);
-  assert.match(data, /name:/);
+  assert.deepEqual(await findFilesByName(path.join(home, '.claude', 'skills'), 'SKILL.md'), [
+    path.join(home, '.claude', 'skills', 'ads-fe', 'SKILL.md'),
+  ]);
   assert.match(result.stdout, /\.claude\/skills\/ads-fe/);
 });
 
@@ -63,22 +89,27 @@ test('init codex --project installs bundled skill into current project', async (
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const skill = await readFile(path.join(project, '.codex', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
-  const data = await readFile(path.join(project, '.codex', 'skills', 'ads-fe', 'skill-data', 'core', 'SKILL.md'), 'utf8');
   assert.match(skill, /ads-fe/i);
-  assert.match(data, /name:/);
+  assert.deepEqual(await findFilesByName(path.join(project, '.codex', 'skills'), 'SKILL.md'), [
+    path.join(project, '.codex', 'skills', 'ads-fe', 'SKILL.md'),
+  ]);
 });
 
-test('init cursor --project writes a project MDC rule and skill data', async () => {
+test('init cursor --project installs a Cursor agent skill', async () => {
   const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  const legacyRulePath = path.join(project, '.cursor', 'rules', 'ads-fe.mdc');
+  await mkdir(path.dirname(legacyRulePath), { recursive: true });
+  await writeFile(legacyRulePath, 'legacy rule');
+
   const result = runCli(['init', 'cursor', '--project'], project);
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  const rule = await readFile(path.join(project, '.cursor', 'rules', 'ads-fe.mdc'), 'utf8');
-  const data = await readFile(path.join(project, '.cursor', 'rules', 'ads-fe-skill-data', 'core', 'SKILL.md'), 'utf8');
-  assert.match(rule, /^---\n/);
-  assert.match(rule, /alwaysApply: true/);
-  assert.match(rule, /ads-fe-skill-data/);
-  assert.match(data, /name:/);
+  const skill = await readFile(path.join(project, '.cursor', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  assert.match(skill, /name: ads-fe/);
+  assert.deepEqual(await findFilesByName(path.join(project, '.cursor', 'skills'), 'SKILL.md'), [
+    path.join(project, '.cursor', 'skills', 'ads-fe', 'SKILL.md'),
+  ]);
+  assert.equal(await readFile(legacyRulePath, 'utf8'), 'legacy rule');
 });
 
 test('init all --project installs every project target', async () => {
@@ -88,7 +119,7 @@ test('init all --project installs every project target', async () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   await readFile(path.join(project, '.claude', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
   await readFile(path.join(project, '.codex', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
-  await readFile(path.join(project, '.cursor', 'rules', 'ads-fe.mdc'), 'utf8');
+  await readFile(path.join(project, '.cursor', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
 });
 
 test('remove all removes every global skill install target', async () => {
@@ -101,19 +132,20 @@ test('remove all removes every global skill install target', async () => {
 
   const init = runCli(['init', 'all'], process.cwd(), env);
   assert.equal(init.status, 0, init.stderr || init.stdout);
+  const legacyRulePath = path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'rules', 'ads-fe.md');
+  await mkdir(path.dirname(legacyRulePath), { recursive: true });
+  await writeFile(legacyRulePath, 'legacy rule');
 
   const result = runCli(['remove', 'all'], process.cwd(), env);
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /\.claude\/skills\/ads-fe/);
   assert.match(result.stdout, /\.codex\/skills\/ads-fe/);
-  assert.match(result.stdout, /ads-fe-skill-data/);
+  assert.match(result.stdout, /\.cursor\/skills\/ads-fe/);
   await assert.rejects(access(path.join(home, '.claude', 'skills', 'ads-fe')));
   await assert.rejects(access(path.join(home, '.codex', 'skills', 'ads-fe')));
-  await assert.rejects(access(path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'rules', 'ads-fe.md')));
-  await assert.rejects(
-    access(path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'rules', 'ads-fe-skill-data')),
-  );
+  await assert.rejects(access(path.join(home, '.cursor', 'skills', 'ads-fe')));
+  assert.equal(await readFile(legacyRulePath, 'utf8'), 'legacy rule');
 });
 
 test('remove cursor only removes the global cursor skill files', async () => {
@@ -132,10 +164,7 @@ test('remove cursor only removes the global cursor skill files', async () => {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   await readFile(path.join(home, '.claude', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
   await readFile(path.join(home, '.codex', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
-  await assert.rejects(access(path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'rules', 'ads-fe.md')));
-  await assert.rejects(
-    access(path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'rules', 'ads-fe-skill-data')),
-  );
+  await assert.rejects(access(path.join(home, '.cursor', 'skills', 'ads-fe')));
 });
 
 test('skill remove is an alias for removing global skill files', async () => {

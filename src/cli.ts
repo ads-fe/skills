@@ -161,13 +161,6 @@ function removePath(target: string): void {
   fs.rmSync(target, { recursive: true, force: true });
 }
 
-function copyDirectoryIfExists(sourceDir: string, outputDir: string): boolean {
-  if (!fs.existsSync(sourceDir) || !fs.statSync(sourceDir).isDirectory()) return false;
-  removePath(outputDir);
-  copyDirectory(sourceDir, outputDir);
-  return true;
-}
-
 function writeFileEnsured(filePath: string, content: string): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, content);
@@ -177,27 +170,20 @@ function userHome(): string {
   return os.homedir();
 }
 
-function cursorUserRulesDir(): string {
-  if (process.platform === 'darwin') return path.join(userHome(), 'Library', 'Application Support', 'Cursor', 'User', 'rules');
-  if (process.platform === 'win32') {
-    const base = process.env.APPDATA || path.join(userHome(), 'AppData', 'Roaming');
-    return path.join(base, 'Cursor', 'User', 'rules');
-  }
-
-  const base = process.env.XDG_CONFIG_HOME || path.join(userHome(), '.config');
-  return path.join(base, 'Cursor', 'User', 'rules');
+function cursorUserSkillsDir(): string {
+  return path.join(userHome(), '.cursor', 'skills');
 }
 
 function agentSkillDir(agent: InitAgent, scope: InitScope): string {
   if (scope === 'project') {
     if (agent === 'claude') return path.join(process.cwd(), '.claude', 'skills', 'ads-fe');
     if (agent === 'codex') return path.join(process.cwd(), '.codex', 'skills', 'ads-fe');
-    return path.join(process.cwd(), '.cursor', 'rules');
+    return path.join(process.cwd(), '.cursor', 'skills', 'ads-fe');
   }
 
   if (agent === 'claude') return path.join(userHome(), '.claude', 'skills', 'ads-fe');
   if (agent === 'codex') return path.join(userHome(), '.codex', 'skills', 'ads-fe');
-  return cursorUserRulesDir();
+  return path.join(cursorUserSkillsDir(), 'ads-fe');
 }
 
 function readRootSkill(root: string): string {
@@ -213,53 +199,16 @@ function installSkillDirectory(agent: InitAgent, scope: InitScope, root: string)
   fs.mkdirSync(targetDir, { recursive: true });
   fs.copyFileSync(path.join(root, 'skill.md'), path.join(targetDir, SKILL_FILE));
 
-  if (!copyDirectoryIfExists(path.join(root, SKILL_DATA_DIR), path.join(targetDir, SKILL_DATA_DIR))) {
-    warnings.push(`Missing skill data directory: ${path.join(root, SKILL_DATA_DIR)}`);
-  }
-
   return { agent, scope, paths: [targetDir], warnings };
 }
 
-function cursorRuleContent(rootSkill: string, dataPath: string, isProject: boolean): string {
-  const relOrAbsDataPath = isProject ? '.cursor/rules/ads-fe-skill-data' : dataPath;
-  return `---
-description: AdsPower frontend skill
-globs:
-alwaysApply: true
----
-
-# AdsPower Frontend Skill
-
-Supporting skill data is installed at \`${relOrAbsDataPath}\`.
-
-${rootSkill.trim()}
-`;
-}
-
-function installCursor(scope: InitScope, root: string): InstallResult {
-  const targetBase = agentSkillDir('cursor', scope);
-  const rulePath = path.join(targetBase, scope === 'project' ? 'ads-fe.mdc' : 'ads-fe.md');
-  const dataPath = path.join(targetBase, 'ads-fe-skill-data');
-  const warnings: string[] = [];
-  const rootSkill = readRootSkill(root);
-
-  if (!copyDirectoryIfExists(path.join(root, SKILL_DATA_DIR), dataPath)) {
-    warnings.push(`Missing skill data directory: ${path.join(root, SKILL_DATA_DIR)}`);
-  }
-
-  writeFileEnsured(rulePath, cursorRuleContent(rootSkill, dataPath, scope === 'project'));
-  return { agent: 'cursor', scope, paths: [rulePath, dataPath], warnings };
-}
-
 function installAgent(agent: InitAgent, scope: InitScope, root: string): InstallResult {
-  if (agent === 'cursor') return installCursor(scope, root);
   readRootSkill(root);
   return installSkillDirectory(agent, scope, root);
 }
 
 function cursorInstallPaths(scope: InitScope): string[] {
-  const targetBase = agentSkillDir('cursor', scope);
-  return [path.join(targetBase, scope === 'project' ? 'ads-fe.mdc' : 'ads-fe.md'), path.join(targetBase, 'ads-fe-skill-data')];
+  return [agentSkillDir('cursor', scope)];
 }
 
 function removeAgent(agent: InitAgent, scope: InitScope): RemoveResult {
@@ -345,10 +294,21 @@ function findSkillDirs(): string[] {
     if (dirs.length > 0) return dirs;
   }
 
-  const root = detectPackageRoot();
-  return SKILL_DIRS
-    .map((d) => path.join(root, d))
-    .filter((p: string) => fs.existsSync(p) && fs.statSync(p).isDirectory());
+  const roots = [detectPackageRoot(), detectSkillPackageRoot()];
+  const seen = new Set<string>();
+  const dirs: string[] = [];
+
+  for (const root of roots) {
+    for (const dir of SKILL_DIRS) {
+      const candidate = path.join(root, dir);
+      if (seen.has(candidate) || !fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) continue;
+
+      seen.add(candidate);
+      dirs.push(candidate);
+    }
+  }
+
+  return dirs;
 }
 
 function discoverSkills(includeHidden = false): Skill[] {

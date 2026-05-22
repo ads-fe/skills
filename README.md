@@ -38,6 +38,15 @@ ads-fe init cursor --project
 
 `ads-fe init <agent>` 会把这个包内置的 skill 安装到 AI agent 中。
 
+安装路径：
+
+- Codex 全局：`~/.codex/skills/ads-fe/SKILL.md`
+- Claude 全局：`~/.claude/skills/ads-fe/SKILL.md`
+- Cursor 全局：`~/.cursor/skills/ads-fe/SKILL.md`
+- Cursor 项目级：`.cursor/skills/ads-fe/SKILL.md`
+
+Cursor 使用 Agent Skills 目录结构，不再安装到 `.cursor/rules`。
+
 `ads-fe skill init` 与上面的命令不同：它会初始化外部 skill 源仓库，这些仓库用于维护本包。
 
 ## 命令
