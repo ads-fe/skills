@@ -1,6 +1,6 @@
 {
   "name": "ads-fe",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Dynamic skill discovery CLI",
   "type": "module",
   "bin": {
@@ -27,7 +27,7 @@
     "dist/cli.js",
     "dist/meta.js",
     "skill.md",
-    "skills",
+    "skill-data",
     "README.md"
   ],
   "license": "ISC",

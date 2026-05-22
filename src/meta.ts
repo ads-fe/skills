@@ -20,7 +20,7 @@ export const submodules: Record<string, string> = {
 }
 
 /**
- * Already generated skills, sync with their `skills/` directory
+ * Already generated skills, sync from each vendor's `skills/` directory into `skill-data/`
  */
 export const vendors: Record<string, VendorSkillMeta> = {
   'vue': {

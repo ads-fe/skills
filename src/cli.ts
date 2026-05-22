@@ -27,11 +27,17 @@ type InstallResult = {
   paths: string[];
   warnings: string[];
 };
+type RemoveResult = {
+  agent: InitAgent;
+  scope: InitScope;
+  paths: string[];
+};
 
-const SKILL_DIRS = ['skills', 'skills'];
+const SKILL_DATA_DIR = 'skill-data';
+const SKILL_DIRS = [SKILL_DATA_DIR];
 const SKILL_FILE = 'SKILL.md';
-const ENV_SKILLS_DIR = 'ADSPOWER_SKILLS_DIR';
-const GENERATED_SKILL_DIR = 'skills';
+const ENV_SKILL_DATA_DIR = 'ADSPOWER_SKILL_DATA_DIR';
+const GENERATED_SKILL_DIR = SKILL_DATA_DIR;
 
 type Project = {
   name: string;
@@ -207,15 +213,15 @@ function installSkillDirectory(agent: InitAgent, scope: InitScope, root: string)
   fs.mkdirSync(targetDir, { recursive: true });
   fs.copyFileSync(path.join(root, 'skill.md'), path.join(targetDir, SKILL_FILE));
 
-  if (!copyDirectoryIfExists(path.join(root, 'skills'), path.join(targetDir, 'skills'))) {
-    warnings.push(`Missing skills directory: ${path.join(root, 'skills')}`);
+  if (!copyDirectoryIfExists(path.join(root, SKILL_DATA_DIR), path.join(targetDir, SKILL_DATA_DIR))) {
+    warnings.push(`Missing skill data directory: ${path.join(root, SKILL_DATA_DIR)}`);
   }
 
   return { agent, scope, paths: [targetDir], warnings };
 }
 
 function cursorRuleContent(rootSkill: string, dataPath: string, isProject: boolean): string {
-  const relOrAbsDataPath = isProject ? '.cursor/rules/ads-fe-skills' : dataPath;
+  const relOrAbsDataPath = isProject ? '.cursor/rules/ads-fe-skill-data' : dataPath;
   return `---
 description: AdsPower frontend skill
 globs:
@@ -233,12 +239,12 @@ ${rootSkill.trim()}
 function installCursor(scope: InitScope, root: string): InstallResult {
   const targetBase = agentSkillDir('cursor', scope);
   const rulePath = path.join(targetBase, scope === 'project' ? 'ads-fe.mdc' : 'ads-fe.md');
-  const dataPath = path.join(targetBase, 'ads-fe-skills');
+  const dataPath = path.join(targetBase, 'ads-fe-skill-data');
   const warnings: string[] = [];
   const rootSkill = readRootSkill(root);
 
-  if (!copyDirectoryIfExists(path.join(root, 'skills'), dataPath)) {
-    warnings.push(`Missing skills directory: ${path.join(root, 'skills')}`);
+  if (!copyDirectoryIfExists(path.join(root, SKILL_DATA_DIR), dataPath)) {
+    warnings.push(`Missing skill data directory: ${path.join(root, SKILL_DATA_DIR)}`);
   }
 
   writeFileEnsured(rulePath, cursorRuleContent(rootSkill, dataPath, scope === 'project'));
@@ -249,6 +255,17 @@ function installAgent(agent: InitAgent, scope: InitScope, root: string): Install
   if (agent === 'cursor') return installCursor(scope, root);
   readRootSkill(root);
   return installSkillDirectory(agent, scope, root);
+}
+
+function cursorInstallPaths(scope: InitScope): string[] {
+  const targetBase = agentSkillDir('cursor', scope);
+  return [path.join(targetBase, scope === 'project' ? 'ads-fe.mdc' : 'ads-fe.md'), path.join(targetBase, 'ads-fe-skill-data')];
+}
+
+function removeAgent(agent: InitAgent, scope: InitScope): RemoveResult {
+  const paths = agent === 'cursor' ? cursorInstallPaths(scope) : [agentSkillDir(agent, scope)];
+  for (const targetPath of paths) removePath(targetPath);
+  return { agent, scope, paths };
 }
 
 function getGitSha(dir: string): string | null {
@@ -316,7 +333,7 @@ function expectedGeneratedSkillNames(): Set<string> {
 }
 
 function findSkillDirs(): string[] {
-  const fromEnv = process.env[ENV_SKILLS_DIR];
+  const fromEnv = process.env[ENV_SKILL_DATA_DIR];
   if (fromEnv) {
     const dirs = fromEnv
       .split(path.delimiter)
@@ -395,6 +412,29 @@ function collectFilesRecursive(dir: string): string[] {
 const program = new Command();
 program.name('ads-fe');
 
+function addRemoveCommand(parent: Command): void {
+  parent
+    .command('remove <agent>')
+    .description('Remove the AdsPower skill from claude, codex, cursor, or all')
+    .option('--project', 'Remove from the current project instead of the global user location')
+    .action((agent: string, opts: { project?: boolean }) => {
+      const allowed = new Set(['claude', 'codex', 'cursor', 'all']);
+      if (!allowed.has(agent)) {
+        process.stderr.write(`Unknown agent: ${agent}. Expected one of: claude, codex, cursor, all\n`);
+        process.exitCode = 1;
+        return;
+      }
+
+      const scope: InitScope = opts.project ? 'project' : 'global';
+      const agents: InitAgent[] = agent === 'all' ? ['claude', 'codex', 'cursor'] : [agent as InitAgent];
+
+      for (const targetAgent of agents) {
+        const result = removeAgent(targetAgent, scope);
+        for (const targetPath of result.paths) process.stdout.write(`Removed ${result.agent} ${result.scope}: ${targetPath}\n`);
+      }
+    });
+}
+
 program
   .command('init <agent>')
   .description('Install the bundled AdsPower skill into claude, codex, cursor, or all')
@@ -426,6 +466,9 @@ program
 
 const skill = program.command('skill').description('Manage skills');
 
+addRemoveCommand(program);
+addRemoveCommand(skill);
+
 skill
   .command('init')
   .description('Add missing external skill repositories as git submodules')
@@ -448,7 +491,7 @@ skill
 
 skill
   .command('sync')
-  .description('Sync configured vendor skills into skills')
+  .description('Sync configured vendor skills into skill-data')
   .option('--no-update', 'Skip git submodule update before copying skills')
   .option('--json', 'Output JSON')
   .action((opts: { update?: boolean; json?: boolean }) => {
@@ -470,7 +513,7 @@ skill
 
 skill
   .command('update')
-  .description('Update external repositories and sync vendor skills into skills')
+  .description('Update external repositories and sync vendor skills into skill-data')
   .option('--json', 'Output JSON')
   .action((opts: { json?: boolean }) => {
     runGit(['submodule', 'update', '--remote', '--merge'], detectPackageRoot());
@@ -520,7 +563,7 @@ skill
 
 skill
   .command('cleanup')
-  .description('Remove generated skills entries that are no longer listed in src/meta.ts')
+  .description('Remove generated skill-data entries that are no longer listed in src/meta.ts')
   .option('--dry-run', 'Print stale generated skills without removing them')
   .action((opts: { dryRun?: boolean }) => {
     const root = detectPackageRoot();

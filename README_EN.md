@@ -47,6 +47,9 @@ ads-fe init codex  # skill 安装到 codex 全局
 ads-fe init claude # skill 安装到 claude code 全局
 ads-fe init cursor                    # skill 安装到 cursor 全局
 ads-fe init all --project             # 项目级安装
+ads-fe remove all                     # Remove global codex/claude/cursor skills
+ads-fe remove codex                   # Remove only the global codex skill
+ads-fe skill remove all               # Alias for remove
 
 # for ai 
 ads-fe skill list # 内置 skill 列表
@@ -70,8 +73,8 @@ ads-fe skill cleanup --dry-run
 
 Discovery order:
 
-1. If `ADSPOWER_SKILLS_DIR` is set, split by OS path delimiter and scan those directories first.
-2. Otherwise scan project-root `skills/` and `skills/`.
+1. If `ADSPOWER_SKILL_DATA_DIR` is set, split by OS path delimiter and scan those directories first.
+2. Otherwise scan project-root `skill-data/`.
 
 For each child directory, if `SKILL.md` exists, it is discovered at runtime.
 Frontmatter fields:
@@ -90,10 +93,10 @@ Frontmatter fields:
 External repositories are defined in `src/meta.ts`.
 
 - `skill init` adds missing `sources/<name>` and `vendor/<name>` git submodules.
-- `skill sync` updates submodules, then copies configured `vendor/<name>/skills/<source>` directories into `skills/<output>`.
+- `skill sync` updates submodules, then copies configured `vendor/<name>/skills/<source>` directories into `skill-data/<output>`.
 - `skill sync --no-update` copies from the current local vendor checkout without pulling.
 - `skill update` is an explicit update-and-sync command.
 - `skill check` fetches initialized submodules and reports how many commits each is behind upstream.
-- `skill cleanup` removes stale generated `skills` entries that are no longer listed in `src/meta.ts`; manual skills from `manual` are preserved.
+- `skill cleanup` removes stale generated entries from `skill-data/` that are no longer listed in `src/meta.ts`; manual skills from `manual` are preserved.
 
 Each synced skill gets a `SYNC.md` file with its source path, git SHA, and sync date. If a license file exists at the vendor repository root, it is copied as `LICENSE.md`.
