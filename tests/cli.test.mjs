@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -81,10 +81,15 @@ test('init claude installs bundled skill globally', async () => {
     path.join(home, '.claude', 'skills', 'ads-fe', 'SKILL.md'),
   ]);
   assert.match(result.stdout, /\.claude\/skills\/ads-fe/);
+  assert.equal(
+    await readFile(path.join(home, '.claude', 'CLAUDE.md'), 'utf8'),
+    `@${path.resolve(home, '.claude', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
 });
 
 test('init codex --project installs bundled skill into current project', async () => {
   const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  await writeFile(path.join(project, 'AGENTS.md'), '@/Users/standardsoftware/.codex/RTK.md\n');
   const result = runCli(['init', 'codex', '--project'], project);
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -93,6 +98,62 @@ test('init codex --project installs bundled skill into current project', async (
   assert.deepEqual(await findFilesByName(path.join(project, '.codex', 'skills'), 'SKILL.md'), [
     path.join(project, '.codex', 'skills', 'ads-fe', 'SKILL.md'),
   ]);
+  assert.equal(
+    await readFile(path.join(project, 'AGENTS.md'), 'utf8'),
+    `@/Users/standardsoftware/.codex/RTK.md\n@${path.join(await realpath(project), '.codex', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+});
+
+test('init codex installs globally and updates global AGENTS.md only', async () => {
+  const home = await mkdtemp(path.join(tmpdir(), 'adspower-home-'));
+  const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  await mkdir(path.join(home, '.codex'), { recursive: true });
+  await writeFile(path.join(home, '.codex', 'AGENTS.md'), '@/Users/standardsoftware/.codex/RTK.md\n');
+  const env = {
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+  };
+
+  const first = runCli(['init', 'codex'], project, env);
+  const second = runCli(['init', 'codex'], project, env);
+
+  assert.equal(first.status, 0, first.stderr || first.stdout);
+  assert.equal(second.status, 0, second.stderr || second.stdout);
+  await readFile(path.join(home, '.codex', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  assert.equal(
+    await readFile(path.join(home, '.codex', 'AGENTS.md'), 'utf8'),
+    `@/Users/standardsoftware/.codex/RTK.md\n@${path.resolve(home, '.codex', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+  await assert.rejects(access(path.join(project, 'AGENTS.md')));
+});
+
+test('init claude and cursor install globally and update global instruction files only', async () => {
+  const home = await mkdtemp(path.join(tmpdir(), 'adspower-home-'));
+  const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  await mkdir(path.join(home, '.claude'), { recursive: true });
+  await writeFile(path.join(home, '.claude', 'CLAUDE.md'), '# Existing Claude Instructions\n');
+  const env = {
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+  };
+
+  const result = runCli(['init', 'all'], project, env);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  await readFile(path.join(home, '.claude', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  await readFile(path.join(home, '.cursor', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  assert.equal(
+    await readFile(path.join(home, '.claude', 'CLAUDE.md'), 'utf8'),
+    `# Existing Claude Instructions\n@${path.resolve(home, '.claude', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+  assert.equal(
+    await readFile(path.join(home, '.cursor', 'rules', 'ads-fe.mdc'), 'utf8'),
+    `---\ndescription: AdsPower FE coding standards and workflow entrypoint\nalwaysApply: true\n---\n\n@${path.resolve(home, '.cursor', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+  await assert.rejects(access(path.join(project, 'CLAUDE.md')));
+  await assert.rejects(access(path.join(project, '.cursor')));
 });
 
 test('init cursor --project installs a Cursor agent skill', async () => {
@@ -109,7 +170,37 @@ test('init cursor --project installs a Cursor agent skill', async () => {
   assert.deepEqual(await findFilesByName(path.join(project, '.cursor', 'skills'), 'SKILL.md'), [
     path.join(project, '.cursor', 'skills', 'ads-fe', 'SKILL.md'),
   ]);
-  assert.equal(await readFile(legacyRulePath, 'utf8'), 'legacy rule');
+  assert.equal(
+    await readFile(legacyRulePath, 'utf8'),
+    `---\ndescription: AdsPower FE coding standards and workflow entrypoint\nalwaysApply: true\n---\n\n@${path.join(await realpath(project), '.cursor', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+});
+
+test('init claude --project installs skill and updates project CLAUDE.md', async () => {
+  const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+  await writeFile(path.join(project, 'CLAUDE.md'), '# Project Claude Instructions\n');
+
+  const result = runCli(['init', 'claude', '--project'], project);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  await readFile(path.join(project, '.claude', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  assert.equal(
+    await readFile(path.join(project, 'CLAUDE.md'), 'utf8'),
+    `# Project Claude Instructions\n@${path.join(await realpath(project), '.claude', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
+});
+
+test('init cursor --project installs skill and updates project Cursor rule', async () => {
+  const project = await mkdtemp(path.join(tmpdir(), 'adspower-project-'));
+
+  const result = runCli(['init', 'cursor', '--project'], project);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  await readFile(path.join(project, '.cursor', 'skills', 'ads-fe', 'SKILL.md'), 'utf8');
+  assert.equal(
+    await readFile(path.join(project, '.cursor', 'rules', 'ads-fe.mdc'), 'utf8'),
+    `---\ndescription: AdsPower FE coding standards and workflow entrypoint\nalwaysApply: true\n---\n\n@${path.join(await realpath(project), '.cursor', 'skills', 'ads-fe', 'SKILL.md')}\n`,
+  );
 });
 
 test('init all --project installs every project target', async () => {

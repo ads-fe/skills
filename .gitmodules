@@ -31,3 +31,6 @@
 [submodule "vendor/mcollina"]
 	path = vendor/mcollina
 	url = https://github.com/mcollina/skills
+[submodule "vendor/r-superpowers"]
+	path = vendor/r-superpowers
+	url = https://github.com/Robin-front/superpowers

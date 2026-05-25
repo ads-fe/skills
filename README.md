@@ -43,9 +43,18 @@ ads-fe init cursor --project
 - Codex 全局：`~/.codex/skills/ads-fe/SKILL.md`
 - Claude 全局：`~/.claude/skills/ads-fe/SKILL.md`
 - Cursor 全局：`~/.cursor/skills/ads-fe/SKILL.md`
+- Codex 项目级：`.codex/skills/ads-fe/SKILL.md`
+- Claude 项目级：`.claude/skills/ads-fe/SKILL.md`
 - Cursor 项目级：`.cursor/skills/ads-fe/SKILL.md`
 
-Cursor 使用 Agent Skills 目录结构，不再安装到 `.cursor/rules`。
+自动入口文件：
+
+- Codex 全局：追加 `~/.codex/AGENTS.md`
+- Codex 项目级：追加 `AGENTS.md`
+- Claude 全局：追加 `~/.claude/CLAUDE.md`
+- Claude 项目级：追加 `CLAUDE.md`
+- Cursor 全局：生成 `~/.cursor/rules/ads-fe.mdc`
+- Cursor 项目级：生成 `.cursor/rules/ads-fe.mdc`
 
 `ads-fe skill init` 与上面的命令不同：它会初始化外部 skill 源仓库，这些仓库用于维护本包。
 

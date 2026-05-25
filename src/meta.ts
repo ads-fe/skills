@@ -91,6 +91,25 @@ export const vendors: Record<string, VendorSkillMeta> = {
       'node': 'node',
     },
   },
+  'r-superpowers': {
+    source: 'https://github.com/Robin-front/superpowers',
+    skills: {
+      'brainstorming': 'brainstorming',
+      'dispatching-parallel-agents': 'dispatching-parallel-agents',
+      'executing-plans': 'executing-plans',
+      'finishing-a-development-branch': 'finishing-a-development-branch',
+      'receiving-code-review': 'receiving-code-review',
+      'subagent-driven-development': 'subagent-driven-development',
+      'systematic-debugging': 'systematic-debugging',
+      'test-driven-development': 'test-driven-development',
+      'using-git-worktrees': 'using-git-worktrees',
+      'using-superpowers': 'using-superpowers',
+      'verification-before-completion': 'verification-before-completion',
+      'writing-plans': 'writing-plans',
+      'writing-skills': 'writing-skills',
+      'using-git-commit': 'using-git-commit',
+    },
+  },
 
 }
 

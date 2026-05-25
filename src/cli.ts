@@ -38,6 +38,9 @@ const SKILL_DIRS = [SKILL_DATA_DIR];
 const SKILL_FILE = 'SKILL.md';
 const ENV_SKILL_DATA_DIR = 'ADSPOWER_SKILL_DATA_DIR';
 const GENERATED_SKILL_DIR = SKILL_DATA_DIR;
+const CODEX_AGENTS_FILE = 'AGENTS.md';
+const CLAUDE_INSTRUCTIONS_FILE = 'CLAUDE.md';
+const CURSOR_RULE_FILE = 'ads-fe.mdc';
 
 type Project = {
   name: string;
@@ -199,7 +202,62 @@ function installSkillDirectory(agent: InitAgent, scope: InitScope, root: string)
   fs.mkdirSync(targetDir, { recursive: true });
   fs.copyFileSync(path.join(root, 'skill.md'), path.join(targetDir, SKILL_FILE));
 
-  return { agent, scope, paths: [targetDir], warnings };
+  const paths = [targetDir];
+  if (agent === 'codex') paths.push(ensureCodexAgentsEntry(scope, path.join(targetDir, SKILL_FILE)));
+  if (agent === 'claude') paths.push(ensureClaudeInstructionsEntry(scope, path.join(targetDir, SKILL_FILE)));
+  if (agent === 'cursor') paths.push(ensureCursorRule(scope, path.join(targetDir, SKILL_FILE)));
+
+  return { agent, scope, paths, warnings };
+}
+
+function appendFileReference(filePath: string, referencedFile: string): string {
+  const fileReference = `@${path.resolve(referencedFile)}`;
+  const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+  const lines = existing.split(/\r?\n/).map((line) => line.trim());
+
+  if (lines.includes(fileReference)) return filePath;
+
+  const prefix = existing.length > 0 && !existing.endsWith('\n') ? `${existing}\n` : existing;
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `${prefix}${fileReference}\n`);
+  return filePath;
+}
+
+function codexAgentsPath(scope: InitScope): string {
+  if (scope === 'project') return path.join(process.cwd(), CODEX_AGENTS_FILE);
+  return path.join(userHome(), '.codex', CODEX_AGENTS_FILE);
+}
+
+function ensureCodexAgentsEntry(scope: InitScope, skillFile: string): string {
+  return appendFileReference(codexAgentsPath(scope), skillFile);
+}
+
+function claudeInstructionsPath(scope: InitScope): string {
+  if (scope === 'project') return path.join(process.cwd(), CLAUDE_INSTRUCTIONS_FILE);
+  return path.join(userHome(), '.claude', CLAUDE_INSTRUCTIONS_FILE);
+}
+
+function ensureClaudeInstructionsEntry(scope: InitScope, skillFile: string): string {
+  return appendFileReference(claudeInstructionsPath(scope), skillFile);
+}
+
+function cursorRulePath(scope: InitScope): string {
+  if (scope === 'project') return path.join(process.cwd(), '.cursor', 'rules', CURSOR_RULE_FILE);
+  return path.join(userHome(), '.cursor', 'rules', CURSOR_RULE_FILE);
+}
+
+function ensureCursorRule(scope: InitScope, skillFile: string): string {
+  const rulePath = cursorRulePath(scope);
+  const skillReference = `@${path.resolve(skillFile)}`;
+  const content = `---
+description: AdsPower FE coding standards and workflow entrypoint
+alwaysApply: true
+---
+
+${skillReference}
+`;
+  writeFileEnsured(rulePath, content);
+  return rulePath;
 }
 
 function installAgent(agent: InitAgent, scope: InitScope, root: string): InstallResult {

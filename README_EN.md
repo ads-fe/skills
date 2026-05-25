@@ -43,9 +43,18 @@ Install paths:
 - Codex global: `~/.codex/skills/ads-fe/SKILL.md`
 - Claude global: `~/.claude/skills/ads-fe/SKILL.md`
 - Cursor global: `~/.cursor/skills/ads-fe/SKILL.md`
+- Codex project-local: `.codex/skills/ads-fe/SKILL.md`
+- Claude project-local: `.claude/skills/ads-fe/SKILL.md`
 - Cursor project-local: `.cursor/skills/ads-fe/SKILL.md`
 
-Cursor uses the Agent Skills directory layout and is no longer installed into `.cursor/rules`.
+Automatic entrypoint files:
+
+- Codex global: appends `~/.codex/AGENTS.md`
+- Codex project-local: appends `AGENTS.md`
+- Claude global: appends `~/.claude/CLAUDE.md`
+- Claude project-local: appends `CLAUDE.md`
+- Cursor global: creates `~/.cursor/rules/ads-fe.mdc`
+- Cursor project-local: creates `.cursor/rules/ads-fe.mdc`
 
 `ads-fe skill init` is different: it initializes external skill source repositories used to maintain this package.
 
