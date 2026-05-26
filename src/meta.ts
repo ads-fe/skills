@@ -124,4 +124,5 @@ export const vendors: Record<string, VendorSkillMeta> = {
  */
 export const manual = [
   'core',
+  'fe_plus',
 ]

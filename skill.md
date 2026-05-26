@@ -42,6 +42,7 @@ ads-fe skill get slidev # slidev
 ads-fe skill get tsdown # tsdown
 ads-fe skill get turborepo # turborepo
 ads-fe skill get node # node
+ads-fe skill get fe_plus # mix_fe_plus 业务组件，优先级高于 element-plus-vue3
 ads-fe skill get element-plus-vue3 # element plus vue3
 ```
 
