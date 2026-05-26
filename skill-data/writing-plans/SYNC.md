@@ -1,5 +1,5 @@
 # Sync Info
 
 - Source: `vendor/r-superpowers/skills/writing-plans`
-- Git SHA: `72685197858ca489aa9db83b615a58e22f9edd2c`
-- Synced: 2026-05-25
+- Git SHA: `7c51200fe05a74f56736b8d0bda9c93c782f5a6f`
+- Synced: 2026-05-26

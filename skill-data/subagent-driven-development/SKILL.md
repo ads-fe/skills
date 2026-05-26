@@ -94,14 +94,17 @@ digraph process {
 
 Use the least powerful model that can handle each role to conserve cost and increase speed.
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+**Summarization and text generation tasks** (summaries, commit messages, comments): use a fast, cheap model unless the content requires judgment over complex code behavior.
 
 **Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
+
+**Bug fixes with small code changes** (investigating and fixing a concrete issue, limited implementation): use a standard model.
 
 **Architecture, design, and review tasks**: use the most capable available model.
 
 **Task complexity signals:**
-- Touches 1-2 files with a complete spec → cheap model
+- Summarizes work, drafts commit messages, or writes comments → cheap model
+- Fixes a concrete issue or small code changes → standard model
 - Touches multiple files with integration concerns → standard model
 - Requires design judgment or broad codebase understanding → most capable model
 

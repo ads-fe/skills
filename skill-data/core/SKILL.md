@@ -1,6 +1,6 @@
 ---
 name: core
-description: 用于动态加载的核心运行时技能。
+description: 用于动态加载的核心运行时技能，所有代码都应遵循这些编码规范。
 hidden: false
 ---
 
@@ -63,4 +63,3 @@ hidden: false
 |-------|-------------|-----------|
 | App Development | Vue/Nuxt/UnoCSS conventions and patterns | [app-development](references/app-development.md) |
 | Monorepo | pnpm workspaces, centralized alias, Turborepo | [monorepo](references/monorepo.md) |
-| git | git commit 规范 | [git](references/git.md) |

@@ -110,6 +110,12 @@ export const vendors: Record<string, VendorSkillMeta> = {
       'using-git-commit': 'using-git-commit',
     },
   },
+  'andrej-karpathy-skills': {
+    'source': 'https://github.com/multica-ai/andrej-karpathy-skills',
+    'skills': {
+      'karpathy-guidelines': 'karpathy-guidelines',
+    }
+  },
 
 }
 

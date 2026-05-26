@@ -1,26 +1,20 @@
 ---
 name: ads-fe
-description: AdsPower FE 为代码开发设计的一套开发规范和技术栈规范。适用于任何开发技术栈、AI开发工程化方法论、需求规划、技术方案规划、执行编码任务、Code Review等。
+description: 在开始任何对话时使用 - 为代码开发设计的一套开发规范和技术栈规范。适用于任何开发技术栈、AI开发工程化方法论、需求规划、技术方案规划、执行编码任务、Code Review、commit等。
 hidden: true
 ---
 
 
 ## 从这里开始
 
-这个文件是发现入口，不是使用指南。在运行任何 `ads-fe` 命令之前，
-先从 CLI 加载实际的工作流内容 `core` 和 `using-superpowers`：
+这个文件是发现入口，不是使用指南，但即使与下面的任何skill只有 1% 的相关性，也必须应用。在运行任何 `ads-fe` 命令之前，
+必须先从 CLI 加载实际的核心行为准则 `karpathy-guidelines`、工作流 `using-superpowers`、代码规范 `core`：
 
 ```bash
-ads-fe skill get core              # 基础编码规范
-ads-fe skill get core --full       # 包含完整参考和模板
-
-ads-fe skill get using-superpowers # 工作流、工程化方法论
-ads-fe skill get using-superpowers --full # 包含完整参考和模板
+ads-fe skill get karpathy-guidelines   # 核心行为准则
+ads-fe skill get core                  # 基础编码规范
+ads-fe skill get using-superpowers     # 工作流、工程化方法论
 ```
-
-CLI 提供的 skill 内容始终与已安装版本匹配，因此说明不会过期。
-这个入口文件的内容在不同发布版本之间不会变化，所以它只指向
-`skills get core`。
 
 ## 技术栈识别门禁
 
@@ -68,7 +62,7 @@ ads-fe skill get using-git-worktrees
 ads-fe skill get verification-before-completion
 ads-fe skill get writing-plans
 ads-fe skill get writing-skills
-ads-fe skill get using-git-commit
+ads-fe skill get using-git-commit  # git commit message generation
 ```
 
 ## 动态加载协议
