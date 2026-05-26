@@ -26,17 +26,17 @@ metadata:
 
 | Component | Use For | Reference |
 |-----------|---------|-----------|
-| Btn | AdsPower 按钮样式、loading、icon、支付标签 | [components](references/components.md#btn) |
-| CheckBox | 字符串/自定义值 checkbox、必选错误、tooltip 文案 | [components](references/components.md#checkbox) |
-| AdsInfo | 统一信息、警告、错误提示条 | [components](references/components.md#adsinfo) |
-| AdsTooltip | Element Plus tooltip 二次封装、下划线文本、最大宽度 | [components](references/components.md#adstooltip) |
-| AdsSvg | svg sprite 图标 | [components](references/components.md#adssvg) |
-| SerialTag | 多个环境/账号等序列 tag 展示和删除 | [components](references/components.md#serialtag) |
-| Switch | AdsPower 开关，支持异步前置校验和 loading | [components](references/components.md#switch) |
-| SwitchTitle | 分段标题切换 | [components](references/components.md#switchtitle) |
-| AdsDropdown | 业务复杂下拉、创建、远程加载、多选 tag | [components](references/components.md#adsdropdown) |
-| TagDropdown | 多色标签下拉、远程标签列表、创建标签 | [components](references/components.md#tagdropdown) |
-| Table | AdsTable 业务表格、选择、跨页选择、列定制、TableV2 | [components](references/components.md#table) |
+| Btn | AdsPower 按钮样式、loading、icon、支付标签 | [Btn](references/Btn.md) |
+| CheckBox | 字符串/自定义值 checkbox、必选错误、tooltip 文案 | [CheckBox](references/CheckBox.md) |
+| AdsInfo | 统一信息、警告、错误提示条 | [AdsInfo](references/AdsInfo.md) |
+| AdsTooltip | Element Plus tooltip 二次封装、下划线文本、最大宽度 | [AdsTooltip](references/AdsTooltip.md) |
+| AdsSvg | svg sprite 图标 | [AdsSvg](references/AdsSvg.md) |
+| SerialTag | 多个环境/账号等序列 tag 展示和删除 | [SerialTag](references/SerialTag.md) |
+| Switch | AdsPower 开关，支持异步前置校验和 loading | [Switch](references/Switch.md) |
+| SwitchTitle | 分段标题切换 | [SwitchTitle](references/SwitchTitle.md) |
+| AdsDropdown | 业务复杂下拉、创建、远程加载、多选 tag | [AdsDropdown](references/AdsDropdown.md) |
+| TagDropdown | 多色标签下拉、远程标签列表、创建标签 | [TagDropdown](references/TagDropdown.md) |
+| Table | AdsTable 业务表格、选择、跨页选择、列定制、TableV2 | [Table](references/Table.md) |
 
 ## Minimal Demo Pattern
 

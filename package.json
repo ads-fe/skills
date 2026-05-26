@@ -1,6 +1,6 @@
 {
   "name": "ads-fe",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Dynamic skill discovery CLI",
   "type": "module",
   "bin": {
